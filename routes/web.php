@@ -6,6 +6,6 @@ Route::get('/', function () {
     return response()->json([
         'name' => config('wishme.name').' API',
         'brand' => config('wishme.brand'),
-        'health' => url('/api/wishme/health'),
+        'health' => url('/api/health'),
     ]);
 });

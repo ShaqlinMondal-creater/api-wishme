@@ -2,6 +2,8 @@
 
 Laravel REST API for WISHME, under the LIWAAS ecosystem.
 
+Requires **PHP 8.4+**.
+
 - Local: `http://localhost:8000/api/wishme`
 - Production (later): `api.liwaas.com/api/wishme`
 

@@ -11,6 +11,4 @@ Requires **PHP 8.4+**.
 php artisan serve
 ```
 
-Health: `GET /api/wishme/health`
-
 This phase is the backend foundation only: Sanctum, queues, policies folder, services folder, and SQLite. Auth, templates, projects, publishing, QR, and Razorpay are not implemented yet. 

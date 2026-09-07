@@ -64,4 +64,24 @@ class UsersModel extends Authenticatable
     {
         return $this->role === self::ROLE_ADMIN;
     }
+
+    /**
+     * @return array<string, mixed>
+     */
+    public function toApiArray(): array
+    {
+        return [
+            'id' => $this->id,
+            'name' => $this->name,
+            'email' => $this->email,
+            'mobile_no' => $this->mobile_no,
+            'role' => $this->role,
+            'dob' => $this->dob?->toDateString(),
+            'auth_provider' => $this->auth_provider,
+            'mobile_verify_at' => $this->mobile_verify_at?->toIso8601String(),
+            'is_active' => $this->is_active,
+            'is_loggedin' => $this->is_loggedin,
+            'created_at' => $this->created_at?->toIso8601String(),
+        ];
+    }
 }

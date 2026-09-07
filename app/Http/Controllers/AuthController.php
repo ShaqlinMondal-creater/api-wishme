@@ -39,7 +39,7 @@ class AuthController extends Controller
         return $this->success('Registered successfully.', [
             'token' => $token,
             'token_type' => 'Bearer',
-            'user' => $this->userPayload($user),
+            'user' => $user->toApiArray(),
         ], 201);
     }
 
@@ -78,7 +78,7 @@ class AuthController extends Controller
         return $this->success('Logged in successfully.', [
             'token' => $token,
             'token_type' => 'Bearer',
-            'user' => $this->userPayload($user),
+            'user' => $user->toApiArray(),
         ]);
     }
 
@@ -167,7 +167,7 @@ class AuthController extends Controller
         }
 
         return $this->success('Profile fetched successfully.', [
-            'user' => $this->userPayload($user),
+            'user' => $user->toApiArray(),
         ]);
     }
 
@@ -196,7 +196,7 @@ class AuthController extends Controller
         $user->save();
 
         return $this->success('Profile updated successfully.', [
-            'user' => $this->userPayload($user->fresh()),
+            'user' => $user->fresh()?->toApiArray() ?? [],
         ]);
     }
 
@@ -209,28 +209,5 @@ class AuthController extends Controller
                 fn ($query) => $query->where('mobile_no', $mobileNo),
             )
             ->first();
-    }
-
-    /**
-     * @return array<string, mixed>
-     */
-    private function userPayload(?UsersModel $user): array
-    {
-        if ($user === null) {
-            return [];
-        }
-
-        return [
-            'id' => $user->id,
-            'name' => $user->name,
-            'email' => $user->email,
-            'mobile_no' => $user->mobile_no,
-            'role' => $user->role,
-            'dob' => $user->dob?->toDateString(),
-            'auth_provider' => $user->auth_provider,
-            'mobile_verify_at' => $user->mobile_verify_at?->toIso8601String(),
-            'is_active' => $user->is_active,
-            'is_loggedin' => $user->is_loggedin,
-        ];
     }
 }

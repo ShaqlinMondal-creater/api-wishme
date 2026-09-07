@@ -13,9 +13,12 @@ return [
         'http://localhost:5174',
         'http://127.0.0.1:5174',
         'https://wishme.liwaas.com',
+        'https://wishme-react.vercel.app',
     ])),
 
-    'allowed_origins_patterns' => [],
+    'allowed_origins_patterns' => [
+        '#^https://wishme-react([.-][A-Za-z0-9-]+)*\.vercel\.app$#',
+    ],
 
     'allowed_headers' => ['*'],
 

@@ -12,22 +12,60 @@ class UsersController extends Controller
     public function index(Request $request): JsonResponse
     {
         $request->validate([
+            'search' => ['nullable', 'string', 'max:120'],
+            'status' => ['nullable', 'in:active,inactive'],
             'role' => ['nullable', 'in:customer,admin'],
+            'limit' => ['nullable', 'integer', 'min:1', 'max:100'],
+            'offset' => ['nullable', 'integer', 'min:0'],
         ]);
 
-        $users = UsersModel::query()
+        $search = trim($request->string('search')->toString());
+        $limit = $request->integer('limit', 10);
+        $offset = $request->integer('offset', 0);
+
+        $query = UsersModel::query()
             ->where('is_deleted', false)
+            ->when(
+                $search !== '',
+                function ($query) use ($search) {
+                    $term = '%'.addcslashes($search, '%_\\').'%';
+
+                    $query->where(function ($query) use ($term) {
+                        $query
+                            ->where('name', 'like', $term)
+                            ->orWhere('email', 'like', $term)
+                            ->orWhere('mobile_no', 'like', $term);
+                    });
+                },
+            )
+            ->when(
+                $request->input('status') === 'active',
+                fn ($query) => $query->where('is_active', true),
+            )
+            ->when(
+                $request->input('status') === 'inactive',
+                fn ($query) => $query->where('is_active', false),
+            )
             ->when(
                 $request->filled('role'),
                 fn ($query) => $query->where('role', $request->string('role')->toString()),
-            )
+            );
+
+        $total = (clone $query)->count();
+
+        $users = $query
             ->orderByDesc('id')
+            ->offset($offset)
+            ->limit($limit)
             ->get()
             ->map(fn (UsersModel $user) => $user->toApiArray())
             ->values();
 
         return $this->success('Users fetched successfully.', [
             'users' => $users,
+            'total' => $total,
+            'limit' => $limit,
+            'offset' => $offset,
         ]);
     }
 

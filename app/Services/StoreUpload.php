@@ -6,9 +6,9 @@ use App\Models\ProjectsModel;
 use App\Models\TemplatesModel;
 use App\Models\UploadsModel;
 use Illuminate\Http\UploadedFile;
-use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 use InvalidArgumentException;
+use RuntimeException;
 
 class StoreUpload
 {
@@ -36,13 +36,20 @@ class StoreUpload
         $extension = strtolower($file->getClientOriginalExtension());
         $filename = Str::random(40).($extension !== '' ? '.'.$extension : '');
         $path = $folder.'/'.$filename;
-        $contents = file_get_contents($file->getRealPath() ?: $file->getPathname());
+        $absolute = public_path('uploads'.DIRECTORY_SEPARATOR.str_replace('/', DIRECTORY_SEPARATOR, $path));
+        $directory = dirname($absolute);
 
-        if ($contents === false) {
-            throw new InvalidArgumentException('The file could not be read.');
+        if (! is_dir($directory) && ! mkdir($directory, 0755, true) && ! is_dir($directory)) {
+            throw new RuntimeException('Could not create the uploads folder.');
         }
 
-        Storage::disk('uploads')->put($path, $contents);
+        $source = $file->getRealPath() ?: $file->getPathname();
+        $copied = copy($source, $absolute);
+
+        if (! $copied) {
+            throw new RuntimeException('The file could not be saved.');
+        }
+
         $mime = $this->detectMime($file, $extension);
 
         return UploadsModel::query()->create([
@@ -52,7 +59,7 @@ class StoreUpload
             'kind' => UploadsModel::kindFromExtension($extension),
             'disk' => 'uploads',
             'path' => $path,
-            'url' => Storage::disk('uploads')->url($path),
+            'url' => $this->publicUrl($path),
             'original_name' => Str::limit($file->getClientOriginalName(), 255, ''),
             'mime' => $mime,
             'size' => $file->getSize(),
@@ -68,5 +75,10 @@ class StoreUpload
         }
 
         return UploadsModel::MIME_BY_EXTENSION[$extension] ?? 'application/octet-stream';
+    }
+
+    private function publicUrl(string $path): string
+    {
+        return rtrim((string) config('filesystems.disks.uploads.url'), '/').'/'.ltrim($path, '/');
     }
 }

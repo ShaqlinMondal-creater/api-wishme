@@ -33,8 +33,16 @@ class StoreUpload
             throw new InvalidArgumentException('An upload must belong to a template or a project.');
         }
 
-        $path = $file->store($folder, 'uploads');
         $extension = strtolower($file->getClientOriginalExtension());
+        $filename = Str::random(40).($extension !== '' ? '.'.$extension : '');
+        $path = $folder.'/'.$filename;
+        $contents = file_get_contents($file->getRealPath() ?: $file->getPathname());
+
+        if ($contents === false) {
+            throw new InvalidArgumentException('The file could not be read.');
+        }
+
+        Storage::disk('uploads')->put($path, $contents);
         $mime = $this->detectMime($file, $extension);
 
         return UploadsModel::query()->create([

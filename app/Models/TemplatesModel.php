@@ -19,6 +19,7 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
     'has_privacy',
     'has_surprise_gift',
     'is_active',
+    'content',
 ])]
 class TemplatesModel extends Model
 {
@@ -65,6 +66,7 @@ class TemplatesModel extends Model
             'has_privacy' => 'boolean',
             'has_surprise_gift' => 'boolean',
             'is_active' => 'boolean',
+            'content' => 'array',
         ];
     }
 
@@ -118,6 +120,7 @@ class TemplatesModel extends Model
             'has_privacy' => $this->has_privacy,
             'has_surprise_gift' => $this->has_surprise_gift,
             'is_active' => $this->is_active,
+            'content' => $this->content ?? [],
             'created_at' => $this->created_at?->toIso8601String(),
             'updated_at' => $this->updated_at?->toIso8601String(),
         ];

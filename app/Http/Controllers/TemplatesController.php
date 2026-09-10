@@ -3,10 +3,12 @@
 namespace App\Http\Controllers;
 
 use App\Http\Requests\StoreTemplateRequest;
+use App\Http\Requests\UpdateTemplateContentRequest;
 use App\Http\Requests\UpdateTemplateRequest;
 use App\Models\TemplatesModel;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Storage;
 
 class TemplatesController extends Controller
 {
@@ -133,6 +135,66 @@ class TemplatesController extends Controller
         $template->delete();
 
         return $this->success('Template deleted successfully.');
+    }
+
+    public function adminShow(int $id): JsonResponse
+    {
+        $template = TemplatesModel::query()->find($id);
+
+        if ($template === null) {
+            return $this->error('Template not found.', 404);
+        }
+
+        return $this->success('Template fetched successfully.', [
+            'template' => $template->toApiArray(),
+        ]);
+    }
+
+    public function updateContent(UpdateTemplateContentRequest $request, int $id): JsonResponse
+    {
+        $template = TemplatesModel::query()->find($id);
+
+        if ($template === null) {
+            return $this->error('Template not found.', 404);
+        }
+
+        $template->content = $request->validated('content');
+        $template->save();
+
+        return $this->success('Template content saved.', [
+            'template' => $template->fresh()?->toApiArray(),
+        ]);
+    }
+
+    public function uploadMedia(Request $request, int $id): JsonResponse
+    {
+        $template = TemplatesModel::query()->find($id);
+
+        if ($template === null) {
+            return $this->error('Template not found.', 404);
+        }
+
+        $request->validate([
+            'file' => [
+                'required',
+                'file',
+                'max:20480',
+                'mimetypes:image/jpeg,image/png,image/webp,image/gif,video/mp4,video/webm',
+            ],
+        ]);
+
+        $file = $request->file('file');
+
+        if ($file === null) {
+            return $this->error('Please choose an image or video.', 422);
+        }
+
+        $path = $file->store('templates/'.$template->id, 'uploads');
+
+        return $this->success('File uploaded.', [
+            'url' => Storage::disk('uploads')->url($path),
+            'path' => $path,
+        ]);
     }
 
     private function findPublicTemplate(string $id): ?TemplatesModel

@@ -33,7 +33,10 @@ Route::middleware('auth:sanctum')->group(function () {
 
         Route::get('/templates', [TemplatesController::class, 'adminIndex']);
         Route::post('/templates', [TemplatesController::class, 'store']);
+        Route::get('/templates/{id}', [TemplatesController::class, 'adminShow']);
         Route::put('/templates/{id}', [TemplatesController::class, 'update']);
+        Route::put('/templates/{id}/content', [TemplatesController::class, 'updateContent']);
+        Route::post('/templates/{id}/media', [TemplatesController::class, 'uploadMedia']);
         Route::delete('/templates/{id}', [TemplatesController::class, 'destroy']);
     });
 });

@@ -2,6 +2,7 @@
 
 namespace App\Http\Middleware;
 
+use App\Models\UsersModel;
 use Closure;
 use Illuminate\Http\Request;
 use Symfony\Component\HttpFoundation\Response;
@@ -14,8 +15,9 @@ class RoleMiddleware
     public function handle(Request $request, Closure $next, string ...$roles): Response
     {
         $user = $request->user();
+        $role = $user instanceof UsersModel ? $user->roleValue() : null;
 
-        if ($user === null || ! in_array($user->role, $roles, true)) {
+        if ($user === null || $role === null || ! in_array($role, $roles, true)) {
             return response()->json([
                 'success' => false,
                 'message' => 'You are not allowed to access this resource.',

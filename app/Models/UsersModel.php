@@ -2,10 +2,12 @@
 
 namespace App\Models;
 
+use App\Enums\UserRole;
 use Database\Factories\UserFactory;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Attributes\Hidden;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use Laravel\Sanctum\HasApiTokens;
@@ -54,6 +56,7 @@ class UsersModel extends Authenticatable
             'mobile_verify_at' => 'datetime',
             'dob' => 'date',
             'password' => 'hashed',
+            'role' => UserRole::class,
             'is_active' => 'boolean',
             'is_loggedin' => 'boolean',
             'is_deleted' => 'boolean',
@@ -62,7 +65,22 @@ class UsersModel extends Authenticatable
 
     public function isAdmin(): bool
     {
-        return $this->role === self::ROLE_ADMIN;
+        return $this->role === UserRole::Admin;
+    }
+
+    public function roleValue(): string
+    {
+        return $this->role instanceof UserRole ? $this->role->value : (string) $this->role;
+    }
+
+    public function purchases(): HasMany
+    {
+        return $this->hasMany(PurchasesModel::class, 'user_id');
+    }
+
+    public function projects(): HasMany
+    {
+        return $this->hasMany(ProjectsModel::class, 'user_id');
     }
 
     /**
@@ -75,7 +93,7 @@ class UsersModel extends Authenticatable
             'name' => $this->name,
             'email' => $this->email,
             'mobile_no' => $this->mobile_no,
-            'role' => $this->role,
+            'role' => $this->roleValue(),
             'dob' => $this->dob?->toDateString(),
             'auth_provider' => $this->auth_provider,
             'mobile_verify_at' => $this->mobile_verify_at?->toIso8601String(),

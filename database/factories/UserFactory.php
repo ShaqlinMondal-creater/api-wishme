@@ -2,6 +2,7 @@
 
 namespace Database\Factories;
 
+use App\Enums\UserRole;
 use App\Models\UsersModel;
 use Illuminate\Database\Eloquent\Factories\Factory;
 use Illuminate\Support\Facades\Hash;
@@ -28,7 +29,7 @@ class UserFactory extends Factory
             'password' => static::$password ??= Hash::make('password'),
             'remember_token' => Str::random(10),
             'mobile_no' => fake()->unique()->numerify('9#########'),
-            'role' => UsersModel::ROLE_CUSTOMER,
+            'role' => UserRole::Customer,
             'auth_provider' => 'email',
             'is_active' => true,
             'is_loggedin' => false,

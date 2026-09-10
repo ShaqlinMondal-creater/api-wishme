@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Enums\UserRole;
 use App\Models\UsersModel;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -27,14 +28,14 @@ class AuthController extends Controller
             'password' => $data['password'],
             'mobile_no' => $data['mobile_no'] ?? null,
             'dob' => $data['dob'] ?? null,
-            'role' => UsersModel::ROLE_CUSTOMER,
+            'role' => UserRole::Customer,
             'auth_provider' => 'email',
             'is_active' => true,
             'is_loggedin' => true,
             'is_deleted' => false,
         ]);
 
-        $token = $user->createToken('wishme-api', [$user->role])->plainTextToken;
+        $token = $user->createToken('wishme-api', [$user->roleValue()])->plainTextToken;
 
         return $this->success('Registered successfully.', [
             'token' => $token,
@@ -49,7 +50,7 @@ class AuthController extends Controller
             'email' => ['required_without:mobile_no', 'nullable', 'email'],
             'mobile_no' => ['required_without:email', 'nullable', 'string', 'max:20'],
             'password' => ['required', 'string'],
-            'role' => ['nullable', 'in:customer,admin'],
+            'role' => ['nullable', Rule::enum(UserRole::class)],
         ]);
 
         $user = $this->findUser($request->input('email'), $request->input('mobile_no'));
@@ -66,14 +67,14 @@ class AuthController extends Controller
             return $this->error('Your account is inactive.', 403);
         }
 
-        if ($request->filled('role') && $user->role !== $request->string('role')->toString()) {
+        if ($request->filled('role') && $user->roleValue() !== $request->string('role')->toString()) {
             return $this->error('You cannot login with this role.', 403);
         }
 
         $user->forceFill(['is_loggedin' => true])->save();
         $user->tokens()->delete();
 
-        $token = $user->createToken('wishme-api', [$user->role])->plainTextToken;
+        $token = $user->createToken('wishme-api', [$user->roleValue()])->plainTextToken;
 
         return $this->success('Logged in successfully.', [
             'token' => $token,

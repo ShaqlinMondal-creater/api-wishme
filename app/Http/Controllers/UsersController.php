@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Enums\UserRole;
 use App\Models\UsersModel;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -14,7 +15,7 @@ class UsersController extends Controller
         $request->validate([
             'search' => ['nullable', 'string', 'max:120'],
             'status' => ['nullable', 'in:active,inactive'],
-            'role' => ['nullable', 'in:customer,admin'],
+            'role' => ['nullable', Rule::enum(UserRole::class)],
             'limit' => ['nullable', 'integer', 'min:1', 'max:100'],
             'offset' => ['nullable', 'integer', 'min:0'],
         ]);
@@ -82,7 +83,7 @@ class UsersController extends Controller
             'email' => ['sometimes', 'email', 'max:150', Rule::unique('users', 'email')->ignore($user->id)],
             'mobile_no' => ['sometimes', 'nullable', 'string', 'max:20', Rule::unique('users', 'mobile_no')->ignore($user->id)],
             'dob' => ['sometimes', 'nullable', 'date', 'before:today'],
-            'role' => ['sometimes', 'in:customer,admin'],
+            'role' => ['sometimes', Rule::enum(UserRole::class)],
             'is_active' => ['sometimes', 'boolean'],
             'password' => ['sometimes', 'string', 'min:8'],
         ]);
@@ -90,7 +91,7 @@ class UsersController extends Controller
         if (
             isset($data['role'])
             && $user->isAdmin()
-            && $data['role'] !== UsersModel::ROLE_ADMIN
+            && UserRole::tryFrom((string) ($data['role'] instanceof UserRole ? $data['role']->value : $data['role'])) !== UserRole::Admin
             && $this->isLastAdmin($user)
         ) {
             return $this->error('You cannot change the role of the last admin.', 422);
@@ -153,7 +154,7 @@ class UsersController extends Controller
     private function isLastAdmin(UsersModel $user): bool
     {
         return UsersModel::query()
-            ->where('role', UsersModel::ROLE_ADMIN)
+            ->where('role', UserRole::Admin)
             ->where('is_deleted', false)
             ->where('id', '!=', $user->id)
             ->doesntExist();

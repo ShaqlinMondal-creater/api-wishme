@@ -8,6 +8,6 @@ class DatabaseSeeder extends Seeder
 {
     public function run(): void
     {
-        // No seed data. Customers register themselves. Create an admin in the database when you need one.
+        // No seed data. Create templates and an admin in the database (cPanel) when you need them.
     }
 }

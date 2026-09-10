@@ -83,6 +83,11 @@ class UsersModel extends Authenticatable
         return $this->hasMany(ProjectsModel::class, 'user_id');
     }
 
+    public function uploads(): HasMany
+    {
+        return $this->hasMany(UploadsModel::class, 'user_id');
+    }
+
     /**
      * @return array<string, mixed>
      */

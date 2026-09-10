@@ -4,8 +4,11 @@ namespace App\Http\Controllers;
 
 use App\Enums\ProjectStatus;
 use App\Http\Requests\StoreProjectRequest;
+use App\Http\Requests\StoreUploadRequest;
 use App\Http\Requests\UpdateProjectRequest;
 use App\Models\ProjectsModel;
+use App\Models\UploadsModel;
+use App\Services\StoreUpload;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 
@@ -82,6 +85,49 @@ class ProjectsController extends Controller
 
         return $this->success('Project updated successfully.', [
             'project' => $project->fresh()?->toApiArray(),
+        ]);
+    }
+
+    public function uploads(Request $request, int $id): JsonResponse
+    {
+        $project = $this->ownedProject($request, $id);
+
+        if ($project === null) {
+            return $this->error('Project not found.', 404);
+        }
+
+        $uploads = $project->uploads()
+            ->orderByDesc('id')
+            ->get()
+            ->map(fn (UploadsModel $upload) => $upload->toApiArray())
+            ->values();
+
+        return $this->success('Uploads fetched successfully.', [
+            'uploads' => $uploads,
+        ]);
+    }
+
+    public function uploadMedia(StoreUploadRequest $request, int $id, StoreUpload $store): JsonResponse
+    {
+        $project = $this->ownedProject($request, $id);
+
+        if ($project === null) {
+            return $this->error('Project not found.', 404);
+        }
+
+        $file = $request->file('file');
+        $user = $request->user();
+
+        if ($file === null || $user === null) {
+            return $this->error('Please choose an image, video, or audio file.', 422);
+        }
+
+        $upload = $store->forProject($file, (int) $user->id, $project);
+
+        return $this->success('File uploaded.', [
+            'upload' => $upload->toApiArray(),
+            'url' => $upload->url,
+            'path' => $upload->path,
         ]);
     }
 

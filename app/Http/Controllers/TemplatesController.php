@@ -3,12 +3,14 @@
 namespace App\Http\Controllers;
 
 use App\Http\Requests\StoreTemplateRequest;
+use App\Http\Requests\StoreUploadRequest;
 use App\Http\Requests\UpdateTemplateContentRequest;
 use App\Http\Requests\UpdateTemplateRequest;
 use App\Models\TemplatesModel;
+use App\Models\UploadsModel;
+use App\Services\StoreUpload;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Storage;
 
 class TemplatesController extends Controller
 {
@@ -166,7 +168,7 @@ class TemplatesController extends Controller
         ]);
     }
 
-    public function uploadMedia(Request $request, int $id): JsonResponse
+    public function uploads(int $id): JsonResponse
     {
         $template = TemplatesModel::query()->find($id);
 
@@ -174,26 +176,39 @@ class TemplatesController extends Controller
             return $this->error('Template not found.', 404);
         }
 
-        $request->validate([
-            'file' => [
-                'required',
-                'file',
-                'max:20480',
-                'mimetypes:image/jpeg,image/png,image/webp,image/gif,video/mp4,video/webm',
-            ],
+        $uploads = $template->uploads()
+            ->whereNull('project_id')
+            ->orderByDesc('id')
+            ->get()
+            ->map(fn (UploadsModel $upload) => $upload->toApiArray())
+            ->values();
+
+        return $this->success('Uploads fetched successfully.', [
+            'uploads' => $uploads,
         ]);
+    }
 
-        $file = $request->file('file');
+    public function uploadMedia(StoreUploadRequest $request, int $id, StoreUpload $store): JsonResponse
+    {
+        $template = TemplatesModel::query()->find($id);
 
-        if ($file === null) {
-            return $this->error('Please choose an image or video.', 422);
+        if ($template === null) {
+            return $this->error('Template not found.', 404);
         }
 
-        $path = $file->store('templates/'.$template->id, 'uploads');
+        $file = $request->file('file');
+        $user = $request->user();
+
+        if ($file === null || $user === null) {
+            return $this->error('Please choose an image, video, or audio file.', 422);
+        }
+
+        $upload = $store->forTemplate($file, (int) $user->id, $template);
 
         return $this->success('File uploaded.', [
-            'url' => Storage::disk('uploads')->url($path),
-            'path' => $path,
+            'upload' => $upload->toApiArray(),
+            'url' => $upload->url,
+            'path' => $upload->path,
         ]);
     }
 

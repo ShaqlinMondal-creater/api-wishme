@@ -6,6 +6,7 @@ use App\Enums\ProjectStatus;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 
 #[Fillable([
     'user_id',
@@ -45,6 +46,11 @@ class ProjectsModel extends Model
     public function purchase(): BelongsTo
     {
         return $this->belongsTo(PurchasesModel::class, 'purchase_id');
+    }
+
+    public function uploads(): HasMany
+    {
+        return $this->hasMany(UploadsModel::class, 'project_id');
     }
 
     /**

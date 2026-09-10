@@ -101,6 +101,11 @@ class TemplatesModel extends Model
         return $this->hasMany(ProjectsModel::class, 'template_id');
     }
 
+    public function uploads(): HasMany
+    {
+        return $this->hasMany(UploadsModel::class, 'template_id');
+    }
+
     /**
      * @return array<string, mixed>
      */

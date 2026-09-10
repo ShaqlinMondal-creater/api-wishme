@@ -41,6 +41,42 @@ class UploadsModel extends Model
         'audio/webm',
     ];
 
+    /**
+     * @var list<string>
+     */
+    public const EXTENSIONS = [
+        'jpg',
+        'jpeg',
+        'png',
+        'webp',
+        'gif',
+        'mp4',
+        'webm',
+        'mp3',
+        'wav',
+        'ogg',
+        'm4a',
+        'aac',
+    ];
+
+    /**
+     * @var array<string, string>
+     */
+    public const MIME_BY_EXTENSION = [
+        'jpg' => 'image/jpeg',
+        'jpeg' => 'image/jpeg',
+        'png' => 'image/png',
+        'webp' => 'image/webp',
+        'gif' => 'image/gif',
+        'mp4' => 'video/mp4',
+        'webm' => 'video/webm',
+        'mp3' => 'audio/mpeg',
+        'wav' => 'audio/wav',
+        'ogg' => 'audio/ogg',
+        'm4a' => 'audio/mp4',
+        'aac' => 'audio/aac',
+    ];
+
     protected $table = 'uploads';
 
     /**
@@ -52,6 +88,13 @@ class UploadsModel extends Model
             'kind' => UploadKind::class,
             'size' => 'integer',
         ];
+    }
+
+    public static function kindFromExtension(string $extension): UploadKind
+    {
+        $mime = self::MIME_BY_EXTENSION[strtolower($extension)] ?? 'application/octet-stream';
+
+        return self::kindFromMime($mime);
     }
 
     public static function kindFromMime(string $mime): UploadKind

@@ -3,6 +3,7 @@
 namespace App\Http\Requests;
 
 use App\Models\UploadsModel;
+use Illuminate\Http\UploadedFile;
 
 class StoreUploadRequest extends ApiFormRequest
 {
@@ -21,7 +22,19 @@ class StoreUploadRequest extends ApiFormRequest
                 'required',
                 'file',
                 'max:20480',
-                'mimetypes:'.implode(',', UploadsModel::MIMES),
+                function (string $attribute, mixed $value, \Closure $fail): void {
+                    if (! $value instanceof UploadedFile) {
+                        $fail('Please choose an image, video, or audio file.');
+
+                        return;
+                    }
+
+                    $extension = strtolower($value->getClientOriginalExtension());
+
+                    if (! in_array($extension, UploadsModel::EXTENSIONS, true)) {
+                        $fail('Please choose an image, video, or audio file.');
+                    }
+                },
             ],
         ];
     }

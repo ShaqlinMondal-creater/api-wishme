@@ -34,13 +34,14 @@ class StoreUpload
         }
 
         $path = $file->store($folder, 'uploads');
-        $mime = $file->getMimeType() ?: 'application/octet-stream';
+        $extension = strtolower($file->getClientOriginalExtension());
+        $mime = $this->detectMime($file, $extension);
 
         return UploadsModel::query()->create([
             'user_id' => $userId,
             'template_id' => $templateId,
             'project_id' => $projectId,
-            'kind' => UploadsModel::kindFromMime($mime),
+            'kind' => UploadsModel::kindFromExtension($extension),
             'disk' => 'uploads',
             'path' => $path,
             'url' => Storage::disk('uploads')->url($path),
@@ -48,5 +49,16 @@ class StoreUpload
             'mime' => $mime,
             'size' => $file->getSize(),
         ]);
+    }
+
+    private function detectMime(UploadedFile $file, string $extension): string
+    {
+        $fromClient = $file->getClientMimeType();
+
+        if (is_string($fromClient) && $fromClient !== '' && $fromClient !== 'application/octet-stream') {
+            return $fromClient;
+        }
+
+        return UploadsModel::MIME_BY_EXTENSION[$extension] ?? 'application/octet-stream';
     }
 }

@@ -25,6 +25,21 @@ class TemplatesModel extends Model
     public const SLUG_MIDNIGHT_TOAST = 'midnight-toast';
 
     /**
+     * @var list<string>
+     */
+    public const OCCASIONS = [
+        'birthday',
+        'anniversary',
+        'raksha-bandhan',
+        'bhai-phota',
+    ];
+
+    /**
+     * @var list<int>
+     */
+    public const PRICES = [149, 249, 499];
+
+    /**
      * @var array<string, string>
      */
     public const CONTENT_ROOMS = [

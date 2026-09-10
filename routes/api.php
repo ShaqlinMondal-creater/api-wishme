@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\ProjectsController;
+use App\Http\Controllers\TemplatesController;
 use App\Http\Controllers\UsersController;
 use Illuminate\Support\Facades\Route;
 
@@ -9,6 +10,9 @@ Route::post('/register', [AuthController::class, 'register']);
 Route::post('/login', [AuthController::class, 'login']);
 Route::post('/forgot-password', [AuthController::class, 'forgotPassword']);
 Route::post('/reset-password', [AuthController::class, 'resetPassword']);
+
+Route::get('/templates', [TemplatesController::class, 'index']);
+Route::get('/templates/{id}', [TemplatesController::class, 'show']);
 
 Route::middleware('auth:sanctum')->group(function () {
     Route::post('/logout', [AuthController::class, 'logout']);
@@ -26,5 +30,10 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::get('/users', [UsersController::class, 'index']);
         Route::put('/users/{id}', [UsersController::class, 'update']);
         Route::delete('/users/{id}', [UsersController::class, 'destroy']);
+
+        Route::get('/templates', [TemplatesController::class, 'adminIndex']);
+        Route::post('/templates', [TemplatesController::class, 'store']);
+        Route::put('/templates/{id}', [TemplatesController::class, 'update']);
+        Route::delete('/templates/{id}', [TemplatesController::class, 'destroy']);
     });
 });

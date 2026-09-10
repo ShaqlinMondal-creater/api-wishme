@@ -7,6 +7,7 @@ use App\Http\Requests\StoreProjectRequest;
 use App\Http\Requests\StoreUploadRequest;
 use App\Http\Requests\UpdateProjectRequest;
 use App\Models\ProjectsModel;
+use App\Models\TemplatesModel;
 use App\Models\UploadsModel;
 use App\Services\StoreUpload;
 use Illuminate\Http\JsonResponse;
@@ -17,6 +18,7 @@ class ProjectsController extends Controller
     public function index(Request $request): JsonResponse
     {
         $projects = ProjectsModel::query()
+            ->with('template')
             ->where('user_id', $request->user()?->id)
             ->orderByDesc('id')
             ->get()
@@ -39,15 +41,18 @@ class ProjectsController extends Controller
             'content',
         ]);
 
+        $template = TemplatesModel::query()->find($data['template_id']);
+
         $project = ProjectsModel::query()->create([
             ...$data,
             'user_id' => $request->user()->id,
-            'content' => $data['content'] ?? [],
+            'purchase_id' => $data['purchase_id'] ?? null,
+            'content' => $data['content'] ?? $template?->content ?? [],
             'status' => ProjectStatus::Draft,
         ]);
 
         return $this->success('Project created successfully.', [
-            'project' => $project->toApiArray(),
+            'project' => $project->load('template')->toApiArray(),
         ], 201);
     }
 
@@ -60,7 +65,7 @@ class ProjectsController extends Controller
         }
 
         return $this->success('Project fetched successfully.', [
-            'project' => $project->toApiArray(),
+            'project' => $project->load('template')->toApiArray(),
         ]);
     }
 
@@ -84,7 +89,7 @@ class ProjectsController extends Controller
         $project->save();
 
         return $this->success('Project updated successfully.', [
-            'project' => $project->fresh()?->toApiArray(),
+            'project' => $project->fresh()?->load('template')->toApiArray(),
         ]);
     }
 

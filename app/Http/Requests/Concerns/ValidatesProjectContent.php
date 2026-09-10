@@ -14,27 +14,25 @@ trait ValidatesProjectContent
     protected function contentFieldRules(): array
     {
         return [
-            'content' => ['required', 'array'],
-            'content.letter' => ['sometimes', 'array'],
-            'content.letter.greeting' => ['sometimes', 'nullable', 'string', 'max:160'],
-            'content.letter.body' => ['sometimes', 'nullable'],
-            'content.letter.signoff' => ['sometimes', 'nullable', 'string', 'max:160'],
-            'content.letter.date' => ['sometimes', 'nullable', 'string', 'max:80'],
-            'content.stories' => ['sometimes', 'array'],
-            'content.stories.*' => ['array'],
-            'content.moments' => ['sometimes', 'array'],
-            'content.moments.*' => ['array'],
-            'content.moments.*.title' => ['sometimes', 'nullable', 'string', 'max:160'],
-            'content.moments.*.body' => ['sometimes', 'nullable', 'string', 'max:2000'],
-            'content.moments.*.image' => ['sometimes', 'nullable', 'string', 'max:500'],
-            'content.moments.*.time' => ['sometimes', 'nullable', 'string', 'max:40'],
-            'content.privacy' => ['sometimes', 'array'],
-            'content.gifts' => ['sometimes', 'array', 'max:9'],
-            'content.gifts.*' => ['array'],
-            'content.gifts.*.id' => ['sometimes', 'nullable', 'string', 'max:40'],
-            'content.gifts.*.emoji' => ['sometimes', 'nullable', 'string', 'max:16'],
-            'content.gifts.*.title' => ['sometimes', 'nullable', 'string', 'max:160'],
-            'content.gifts.*.body' => ['sometimes', 'nullable', 'string', 'max:500'],
+            'content' => ['sometimes', 'array'],
+            'content.gate' => ['sometimes', 'array'],
+            'content.gate.cover' => ['sometimes', 'nullable', 'string', 'max:2048'],
+            'content.gate.quote' => ['sometimes', 'nullable', 'string', 'max:500'],
+            'content.gate.recipient' => ['sometimes', 'nullable', 'string', 'max:120'],
+            'content.gate.from' => ['sometimes', 'nullable', 'string', 'max:120'],
+            'content.gate.occasion' => ['sometimes', 'nullable', 'string', 'max:80'],
+            'content.gate.body' => ['sometimes', 'nullable', 'string', 'max:2000'],
+            'content.gate.cta' => ['sometimes', 'nullable', 'string', 'max:80'],
+            'content.gate.footer' => ['sometimes', 'nullable', 'string', 'max:240'],
+            'content.hub' => ['sometimes', 'array'],
+            'content.hub.cover' => ['sometimes', 'nullable', 'string', 'max:2048'],
+            'content.hub.intro' => ['sometimes', 'nullable', 'string', 'max:500'],
+            'content.rooms' => ['sometimes', 'array'],
+            'content.rooms.letter' => ['sometimes', 'array'],
+            'content.rooms.stories' => ['sometimes', 'array'],
+            'content.rooms.moments' => ['sometimes', 'array'],
+            'content.rooms.privacy' => ['sometimes', 'array'],
+            'content.rooms.gifts' => ['sometimes', 'array'],
         ];
     }
 
@@ -52,12 +50,24 @@ trait ValidatesProjectContent
             return;
         }
 
+        $rooms = [];
+
+        if (isset($content['rooms']) && is_array($content['rooms'])) {
+            $rooms = $content['rooms'];
+        } else {
+            foreach (array_keys(TemplatesModel::CONTENT_ROOMS) as $room) {
+                if (array_key_exists($room, $content)) {
+                    $rooms[$room] = $content[$room];
+                }
+            }
+        }
+
         $labels = $template->contentRoomLabels();
 
-        foreach ($content as $room => $value) {
+        foreach ($rooms as $room => $value) {
             if (! is_string($room) || ! isset(TemplatesModel::CONTENT_ROOMS[$room])) {
                 $validator->errors()->add(
-                    is_string($room) ? "content.{$room}" : 'content',
+                    is_string($room) ? "content.rooms.{$room}" : 'content.rooms',
                     'This room is not valid for the template.',
                 );
 
@@ -66,22 +76,10 @@ trait ValidatesProjectContent
 
             if (! $template->allowsContentRoom($room)) {
                 $validator->errors()->add(
-                    "content.{$room}",
+                    "content.rooms.{$room}",
                     ($labels[$room] ?? $room).' is not enabled on this template.',
                 );
             }
-        }
-
-        $letterBody = data_get($content, 'letter.body');
-
-        if (is_array($letterBody)) {
-            foreach ($letterBody as $index => $line) {
-                if (! is_string($line)) {
-                    $validator->errors()->add("content.letter.body.{$index}", 'Each letter line must be text.');
-                }
-            }
-        } elseif ($letterBody !== null && ! is_string($letterBody)) {
-            $validator->errors()->add('content.letter.body', 'Letter body must be text or a list of text.');
         }
     }
 

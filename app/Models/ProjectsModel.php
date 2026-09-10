@@ -68,6 +68,9 @@ class ProjectsModel extends Model
             'from_name' => $this->from_name,
             'content' => $this->content ?? [],
             'status' => $this->status instanceof ProjectStatus ? $this->status->value : $this->status,
+            'template_name' => $this->template?->name,
+            'template_slug' => $this->template?->slug,
+            'occasion' => $this->template?->occasion,
             'created_at' => $this->created_at?->toIso8601String(),
             'updated_at' => $this->updated_at?->toIso8601String(),
         ];

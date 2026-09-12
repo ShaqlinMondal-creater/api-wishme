@@ -6,7 +6,7 @@ class ValidateCouponRequest extends ApiFormRequest
 {
     public function authorize(): bool
     {
-        return $this->user() !== null;
+        return true;
     }
 
     protected function prepareForValidation(): void

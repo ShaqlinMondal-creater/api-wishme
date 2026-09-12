@@ -12,6 +12,7 @@ use App\Models\CouponsModel;
 use App\Services\QuoteCoupon;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Validation\Rule;
 use InvalidArgumentException;
 
@@ -135,9 +136,10 @@ class CouponsController extends Controller
     public function validateCode(ValidateCouponRequest $request, QuoteCoupon $quoteCoupon): JsonResponse
     {
         try {
+            $userId = Auth::guard('sanctum')->id();
             $quote = $quoteCoupon->forTemplate(
                 $request->string('code')->toString(),
-                (int) $request->user()->id,
+                $userId !== null ? (int) $userId : null,
                 $request->string('template')->toString(),
             );
         } catch (InvalidArgumentException $exception) {

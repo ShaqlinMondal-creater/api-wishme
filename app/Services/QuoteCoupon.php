@@ -14,7 +14,7 @@ class QuoteCoupon
     /**
      * @return array<string, mixed>
      */
-    public function forTemplate(string $code, int $userId, string $templateKey): array
+    public function forTemplate(string $code, ?int $userId, string $templateKey): array
     {
         $template = $this->findPublicTemplate($templateKey);
 
@@ -53,7 +53,7 @@ class QuoteCoupon
         ];
     }
 
-    private function assertUsable(CouponsModel $coupon, int $userId, CouponAppliesTo $context): void
+    private function assertUsable(CouponsModel $coupon, ?int $userId, CouponAppliesTo $context): void
     {
         if (! $coupon->is_active) {
             throw new InvalidArgumentException('This coupon is not active.');
@@ -87,11 +87,13 @@ class QuoteCoupon
             }
         }
 
-        $perUser = max(1, (int) $coupon->max_uses_per_user);
-        $userUses = $coupon->uses()->where('user_id', $userId)->count();
+        if ($userId !== null) {
+            $perUser = max(1, (int) $coupon->max_uses_per_user);
+            $userUses = $coupon->uses()->where('user_id', $userId)->count();
 
-        if ($userUses >= $perUser) {
-            throw new InvalidArgumentException('You have already used this coupon.');
+            if ($userUses >= $perUser) {
+                throw new InvalidArgumentException('You have already used this coupon.');
+            }
         }
     }
 

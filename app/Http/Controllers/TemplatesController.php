@@ -11,8 +11,10 @@ use App\Http\Requests\UpdateTemplateRequest;
 use App\Models\TemplatesModel;
 use App\Models\UploadsModel;
 use App\Services\StoreUpload;
+use App\Services\TemplateBulkCreate;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use RuntimeException;
 
 class TemplatesController extends Controller
 {
@@ -115,6 +117,30 @@ class TemplatesController extends Controller
         return $this->success('Templates fetched successfully.', [
             'templates' => $templates,
         ]);
+    }
+
+    public function bulkCreate(Request $request, TemplateBulkCreate $bulkCreate): JsonResponse
+    {
+        $user = $request->user();
+
+        if ($user === null) {
+            return $this->error('Please sign in.', 401);
+        }
+
+        try {
+            $result = $bulkCreate->run((int) $user->id);
+        } catch (RuntimeException $error) {
+            return $this->error($error->getMessage(), 422);
+        }
+
+        return $this->success('Templates created from JSON.', [
+            'created_count' => count($result['created']),
+            'skipped_count' => count($result['skipped']),
+            'covers_attached' => $result['covers_attached'],
+            'missing_occasions' => $result['missing_occasions'],
+            'created' => $result['created'],
+            'skipped' => $result['skipped'],
+        ], count($result['created']) > 0 ? 201 : 200);
     }
 
     public function store(StoreTemplateRequest $request, StoreUpload $store): JsonResponse

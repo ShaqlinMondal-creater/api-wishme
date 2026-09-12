@@ -46,6 +46,7 @@ Route::middleware('auth:sanctum')->group(function () {
 
         Route::get('/templates', [TemplatesController::class, 'adminIndex']);
         Route::post('/templates', [TemplatesController::class, 'store']);
+        Route::post('/templates/bulk-create', [TemplatesController::class, 'bulkCreate']);
         Route::get('/templates/{id}', [TemplatesController::class, 'adminShow']);
         Route::post('/templates/{id}', [TemplatesController::class, 'update']);
         Route::post('/templates/{id}/content', [TemplatesController::class, 'updateContent']);

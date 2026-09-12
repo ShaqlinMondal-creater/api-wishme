@@ -6,6 +6,7 @@ use App\Enums\UploadKind;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 
 #[Fillable([
     'user_id',
@@ -140,6 +141,16 @@ class UploadsModel extends Model
     public function occasion(): BelongsTo
     {
         return $this->belongsTo(OccasionsModel::class, 'occasion_id');
+    }
+
+    public function coveredTemplates(): HasMany
+    {
+        return $this->hasMany(TemplatesModel::class, 'cover_id');
+    }
+
+    public function thumbnailOccasions(): HasMany
+    {
+        return $this->hasMany(OccasionsModel::class, 'thumbnail_id');
     }
 
     /**

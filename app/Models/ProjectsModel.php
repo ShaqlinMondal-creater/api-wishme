@@ -58,6 +58,8 @@ class ProjectsModel extends Model
      */
     public function toApiArray(): array
     {
+        $this->loadMissing(['template.occasion', 'template.coverUpload']);
+
         return [
             'id' => $this->id,
             'user_id' => $this->user_id,
@@ -70,6 +72,12 @@ class ProjectsModel extends Model
             'status' => $this->status instanceof ProjectStatus ? $this->status->value : $this->status,
             'template_name' => $this->template?->name,
             'template_slug' => $this->template?->slug,
+            'template_cover' => $this->template?->coverUpload?->url,
+            'has_letter' => (bool) $this->template?->has_letter,
+            'has_stories' => (bool) $this->template?->has_stories,
+            'has_moments' => (bool) $this->template?->has_moments,
+            'has_privacy' => (bool) $this->template?->has_privacy,
+            'has_surprise_gift' => (bool) $this->template?->has_surprise_gift,
             'occasion' => $this->template?->occasion?->type instanceof \App\Enums\OccasionType
                 ? $this->template->occasion->type->value
                 : $this->template?->occasion?->type,

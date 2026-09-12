@@ -18,11 +18,13 @@ return new class extends Migration
             $table->timestamps();
 
             $table->index('type');
+            $table->index('thumbnail_id');
         });
 
         Schema::table('templates', function (Blueprint $table) {
             $table->unsignedBigInteger('occasion_id')->nullable()->after('cover');
             $table->string('occasion_slug', 40)->nullable()->after('occasion_id');
+            $table->index('occasion_id');
         });
 
         DB::statement('UPDATE templates SET occasion_slug = occasion');
@@ -31,22 +33,9 @@ return new class extends Migration
             $table->dropColumn('occasion');
         });
 
-        Schema::table('uploads', function (Blueprint $table) {
-            $table->dropForeign(['user_id']);
-            $table->dropForeign(['template_id']);
-            $table->dropForeign(['project_id']);
-        });
-
-        Schema::table('projects', function (Blueprint $table) {
-            $table->dropForeign(['user_id']);
-            $table->dropForeign(['template_id']);
-            $table->dropForeign(['purchase_id']);
-        });
-
-        Schema::table('purchases', function (Blueprint $table) {
-            $table->dropForeign(['user_id']);
-            $table->dropForeign(['template_id']);
-        });
+        $this->dropForeignKeys('uploads', ['user_id', 'template_id', 'project_id']);
+        $this->dropForeignKeys('projects', ['user_id', 'template_id', 'purchase_id']);
+        $this->dropForeignKeys('purchases', ['user_id', 'template_id']);
 
         Schema::rename('templates', 't_templates');
         Schema::rename('projects', 't_projects');
@@ -54,58 +43,15 @@ return new class extends Migration
         Schema::rename('purchases', 't_purchases');
 
         Schema::table('t_uploads', function (Blueprint $table) {
-            $table->foreignId('occasion_id')->nullable()->after('project_id')->constrained('t_occasion')->nullOnDelete();
-            $table->foreign('user_id')->references('id')->on('users')->restrictOnDelete();
-            $table->foreign('template_id')->references('id')->on('t_templates')->restrictOnDelete();
-            $table->foreign('project_id')->references('id')->on('t_projects')->restrictOnDelete();
-        });
-
-        Schema::table('t_projects', function (Blueprint $table) {
-            $table->foreign('user_id')->references('id')->on('users')->restrictOnDelete();
-            $table->foreign('template_id')->references('id')->on('t_templates')->restrictOnDelete();
-            $table->foreign('purchase_id')->references('id')->on('t_purchases')->restrictOnDelete();
-        });
-
-        Schema::table('t_purchases', function (Blueprint $table) {
-            $table->foreign('user_id')->references('id')->on('users')->restrictOnDelete();
-            $table->foreign('template_id')->references('id')->on('t_templates')->restrictOnDelete();
-        });
-
-        Schema::table('t_templates', function (Blueprint $table) {
-            $table->foreign('occasion_id')->references('id')->on('t_occasion')->nullOnDelete();
-        });
-
-        Schema::table('t_occasion', function (Blueprint $table) {
-            $table->foreign('thumbnail_id')->references('id')->on('t_uploads')->nullOnDelete();
+            $table->unsignedBigInteger('occasion_id')->nullable()->after('project_id');
+            $table->index('occasion_id');
         });
     }
 
     public function down(): void
     {
-        Schema::table('t_occasion', function (Blueprint $table) {
-            $table->dropForeign(['thumbnail_id']);
-        });
-
-        Schema::table('t_templates', function (Blueprint $table) {
-            $table->dropForeign(['occasion_id']);
-        });
-
-        Schema::table('t_purchases', function (Blueprint $table) {
-            $table->dropForeign(['user_id']);
-            $table->dropForeign(['template_id']);
-        });
-
-        Schema::table('t_projects', function (Blueprint $table) {
-            $table->dropForeign(['user_id']);
-            $table->dropForeign(['template_id']);
-            $table->dropForeign(['purchase_id']);
-        });
-
         Schema::table('t_uploads', function (Blueprint $table) {
-            $table->dropForeign(['user_id']);
-            $table->dropForeign(['template_id']);
-            $table->dropForeign(['project_id']);
-            $table->dropForeign(['occasion_id']);
+            $table->dropIndex(['occasion_id']);
             $table->dropColumn('occasion_id');
         });
 
@@ -114,23 +60,6 @@ return new class extends Migration
         Schema::rename('t_uploads', 'uploads');
         Schema::rename('t_purchases', 'purchases');
 
-        Schema::table('uploads', function (Blueprint $table) {
-            $table->foreign('user_id')->references('id')->on('users')->restrictOnDelete();
-            $table->foreign('template_id')->references('id')->on('templates')->restrictOnDelete();
-            $table->foreign('project_id')->references('id')->on('projects')->restrictOnDelete();
-        });
-
-        Schema::table('projects', function (Blueprint $table) {
-            $table->foreign('user_id')->references('id')->on('users')->restrictOnDelete();
-            $table->foreign('template_id')->references('id')->on('templates')->restrictOnDelete();
-            $table->foreign('purchase_id')->references('id')->on('purchases')->restrictOnDelete();
-        });
-
-        Schema::table('purchases', function (Blueprint $table) {
-            $table->foreign('user_id')->references('id')->on('users')->restrictOnDelete();
-            $table->foreign('template_id')->references('id')->on('templates')->restrictOnDelete();
-        });
-
         Schema::table('templates', function (Blueprint $table) {
             $table->string('occasion', 40)->nullable()->after('cover');
         });
@@ -138,10 +67,30 @@ return new class extends Migration
         DB::statement('UPDATE templates SET occasion = occasion_slug');
 
         Schema::table('templates', function (Blueprint $table) {
+            $table->dropIndex(['occasion_id']);
             $table->dropColumn('occasion_id');
             $table->dropColumn('occasion_slug');
         });
 
         Schema::dropIfExists('t_occasion');
+    }
+
+    /**
+     * @param list<string> $columns
+     */
+    private function dropForeignKeys(string $table, array $columns): void
+    {
+        if (! Schema::hasTable($table)) {
+            return;
+        }
+
+        foreach ($columns as $column) {
+            try {
+                Schema::table($table, function (Blueprint $blueprint) use ($column) {
+                    $blueprint->dropForeign([$column]);
+                });
+            } catch (\Throwable) {
+            }
+        }
     }
 };

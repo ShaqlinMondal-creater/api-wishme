@@ -10,12 +10,14 @@ return new class extends Migration
     {
         Schema::table('t_templates', function (Blueprint $table) {
             $table->unsignedBigInteger('cover_id')->nullable()->after('cover');
-            $table->foreign('cover_id')->references('id')->on('t_uploads')->nullOnDelete();
+            $table->index('cover_id');
         });
 
-        Schema::table('t_templates', function (Blueprint $table) {
-            $table->dropColumn('cover');
-        });
+        if (Schema::hasColumn('t_templates', 'cover')) {
+            Schema::table('t_templates', function (Blueprint $table) {
+                $table->dropColumn('cover');
+            });
+        }
     }
 
     public function down(): void
@@ -25,7 +27,7 @@ return new class extends Migration
         });
 
         Schema::table('t_templates', function (Blueprint $table) {
-            $table->dropForeign(['cover_id']);
+            $table->dropIndex(['cover_id']);
             $table->dropColumn('cover_id');
         });
     }

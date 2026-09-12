@@ -11,8 +11,8 @@ return new class extends Migration
     {
         Schema::create('purchases', function (Blueprint $table) {
             $table->id();
-            $table->foreignId('user_id')->constrained('users')->restrictOnDelete();
-            $table->foreignId('template_id')->constrained('templates')->restrictOnDelete();
+            $table->unsignedBigInteger('user_id');
+            $table->unsignedBigInteger('template_id');
             $table->unsignedInteger('price');
             $table->enum('status', [PurchaseStatus::Paid->value])->default(PurchaseStatus::Paid->value);
             $table->timestamps();

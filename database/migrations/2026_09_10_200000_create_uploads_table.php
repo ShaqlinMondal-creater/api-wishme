@@ -11,9 +11,9 @@ return new class extends Migration
     {
         Schema::create('uploads', function (Blueprint $table) {
             $table->id();
-            $table->foreignId('user_id')->constrained('users')->restrictOnDelete();
-            $table->foreignId('template_id')->nullable()->constrained('templates')->restrictOnDelete();
-            $table->foreignId('project_id')->nullable()->constrained('projects')->restrictOnDelete();
+            $table->unsignedBigInteger('user_id');
+            $table->unsignedBigInteger('template_id')->nullable();
+            $table->unsignedBigInteger('project_id')->nullable();
             $table->enum('kind', [
                 UploadKind::Image->value,
                 UploadKind::Video->value,

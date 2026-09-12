@@ -11,9 +11,9 @@ return new class extends Migration
     {
         Schema::create('projects', function (Blueprint $table) {
             $table->id();
-            $table->foreignId('user_id')->constrained('users')->restrictOnDelete();
-            $table->foreignId('template_id')->constrained('templates')->restrictOnDelete();
-            $table->foreignId('purchase_id')->unique()->constrained('purchases')->restrictOnDelete();
+            $table->unsignedBigInteger('user_id');
+            $table->unsignedBigInteger('template_id');
+            $table->unsignedBigInteger('purchase_id')->unique();
             $table->string('title', 120);
             $table->string('recipient_name', 120);
             $table->string('from_name', 120);

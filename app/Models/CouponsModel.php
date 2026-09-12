@@ -76,4 +76,21 @@ class CouponsModel extends Model
             'updated_at' => $this->updated_at?->toIso8601String(),
         ];
     }
+
+    /**
+     * @return array<string, mixed>
+     */
+    public function toPublicApiArray(): array
+    {
+        $full = $this->toApiArray();
+
+        return [
+            'id' => $full['id'],
+            'code' => $full['code'],
+            'title' => $full['title'],
+            'discount_type' => $full['discount_type'],
+            'amount' => $full['amount'],
+            'applies_to' => $full['applies_to'],
+        ];
+    }
 }

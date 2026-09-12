@@ -30,6 +30,7 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::post('/projects/{id}', [ProjectsController::class, 'update']);
         Route::get('/projects/{id}/uploads', [ProjectsController::class, 'uploads']);
         Route::post('/projects/{id}/media', [ProjectsController::class, 'uploadMedia']);
+        Route::post('/coupons/validate', [CouponsController::class, 'validateCode']);
     });
 
     Route::middleware('role:admin')->prefix('admin')->group(function () {

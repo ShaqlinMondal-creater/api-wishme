@@ -6,11 +6,14 @@ use App\Enums\CouponAppliesTo;
 use App\Enums\CouponUseAppliedTo;
 use App\Http\Requests\StoreCouponRequest;
 use App\Http\Requests\UpdateCouponRequest;
+use App\Http\Requests\ValidateCouponRequest;
 use App\Models\CouponUsesModel;
 use App\Models\CouponsModel;
+use App\Services\QuoteCoupon;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Validation\Rule;
+use InvalidArgumentException;
 
 class CouponsController extends Controller
 {
@@ -127,6 +130,23 @@ class CouponsController extends Controller
             'limit' => $limit,
             'offset' => $offset,
         ]);
+    }
+
+    public function validateCode(ValidateCouponRequest $request, QuoteCoupon $quoteCoupon): JsonResponse
+    {
+        try {
+            $quote = $quoteCoupon->forTemplate(
+                $request->string('code')->toString(),
+                (int) $request->user()->id,
+                $request->string('template')->toString(),
+            );
+        } catch (InvalidArgumentException $exception) {
+            $status = $exception->getMessage() === 'Template not found.' ? 404 : 422;
+
+            return $this->error($exception->getMessage(), $status);
+        }
+
+        return $this->success('Coupon applied.', $quote);
     }
 
     public function store(StoreCouponRequest $request): JsonResponse

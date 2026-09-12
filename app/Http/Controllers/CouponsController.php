@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Enums\CouponAppliesTo;
 use App\Http\Requests\StoreCouponRequest;
 use App\Http\Requests\UpdateCouponRequest;
+use App\Models\CouponUsesModel;
 use App\Models\CouponsModel;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -55,6 +56,41 @@ class CouponsController extends Controller
         ]);
     }
 
+    public function uses(Request $request): JsonResponse
+    {
+        $request->validate([
+            'coupon_id' => ['nullable', 'integer'],
+            'limit' => ['nullable', 'integer', 'min:1', 'max:100'],
+            'offset' => ['nullable', 'integer', 'min:0'],
+        ]);
+
+        $limit = $request->integer('limit', 25);
+        $offset = $request->integer('offset', 0);
+
+        $query = CouponUsesModel::query()
+            ->with(['coupon', 'user'])
+            ->when(
+                $request->filled('coupon_id'),
+                fn ($query) => $query->where('coupon_id', $request->integer('coupon_id')),
+            );
+
+        $total = (clone $query)->count();
+        $uses = $query
+            ->orderByDesc('id')
+            ->offset($offset)
+            ->limit($limit)
+            ->get()
+            ->map(fn (CouponUsesModel $use) => $use->toApiArray())
+            ->values();
+
+        return $this->success('Coupon usage fetched successfully.', [
+            'uses' => $uses,
+            'total' => $total,
+            'limit' => $limit,
+            'offset' => $offset,
+        ]);
+    }
+
     public function store(StoreCouponRequest $request): JsonResponse
     {
         $coupon = CouponsModel::query()->create($this->payload($request->safe()->all()));
@@ -86,6 +122,10 @@ class CouponsController extends Controller
 
         if ($coupon === null) {
             return $this->error('Coupon not found.', 404);
+        }
+
+        if ($coupon->uses()->exists()) {
+            return $this->error('This coupon cannot be deleted because it has been used.', 422);
         }
 
         $coupon->delete();

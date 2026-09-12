@@ -6,6 +6,7 @@ use App\Enums\CouponAppliesTo;
 use App\Enums\CouponDiscountType;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 
 #[Fillable([
     'code',
@@ -39,6 +40,11 @@ class CouponsModel extends Model
             'max_uses_per_user' => 'integer',
             'used_count' => 'integer',
         ];
+    }
+
+    public function uses(): HasMany
+    {
+        return $this->hasMany(CouponUsesModel::class, 'coupon_id');
     }
 
     /**

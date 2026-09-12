@@ -58,6 +58,7 @@ Route::middleware('auth:sanctum')->group(function () {
 
         Route::get('/coupons', [CouponsController::class, 'index']);
         Route::post('/coupons', [CouponsController::class, 'store']);
+        Route::get('/coupons/uses', [CouponsController::class, 'uses']);
         Route::get('/coupons/{id}', [CouponsController::class, 'show']);
         Route::post('/coupons/{id}', [CouponsController::class, 'update']);
         Route::delete('/coupons/{id}', [CouponsController::class, 'destroy']);

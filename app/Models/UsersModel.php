@@ -88,6 +88,11 @@ class UsersModel extends Authenticatable
         return $this->hasMany(UploadsModel::class, 'user_id');
     }
 
+    public function couponUses(): HasMany
+    {
+        return $this->hasMany(CouponUsesModel::class, 'user_id');
+    }
+
     /**
      * @return array<string, mixed>
      */

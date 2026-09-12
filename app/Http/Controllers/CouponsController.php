@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Enums\CouponAppliesTo;
+use App\Enums\CouponUseAppliedTo;
 use App\Http\Requests\StoreCouponRequest;
 use App\Http\Requests\UpdateCouponRequest;
 use App\Models\CouponUsesModel;
@@ -60,18 +61,55 @@ class CouponsController extends Controller
     {
         $request->validate([
             'coupon_id' => ['nullable', 'integer'],
+            'applied_to' => ['nullable', Rule::in(CouponUseAppliedTo::values())],
+            'search' => ['nullable', 'string', 'max:120'],
+            'used_from' => ['nullable', 'date'],
+            'used_to' => ['nullable', 'date', 'after_or_equal:used_from'],
             'limit' => ['nullable', 'integer', 'min:1', 'max:100'],
             'offset' => ['nullable', 'integer', 'min:0'],
         ]);
 
         $limit = $request->integer('limit', 25);
         $offset = $request->integer('offset', 0);
+        $search = trim($request->string('search')->toString());
 
         $query = CouponUsesModel::query()
             ->with(['coupon', 'user'])
             ->when(
                 $request->filled('coupon_id'),
                 fn ($query) => $query->where('coupon_id', $request->integer('coupon_id')),
+            )
+            ->when(
+                $request->filled('applied_to'),
+                fn ($query) => $query->where('applied_to', $request->string('applied_to')->toString()),
+            )
+            ->when(
+                $search !== '',
+                function ($query) use ($search) {
+                    $term = '%'.addcslashes($search, '%_\\').'%';
+
+                    $query->where(function ($query) use ($term) {
+                        $query
+                            ->whereHas('user', function ($query) use ($term) {
+                                $query
+                                    ->where('name', 'like', $term)
+                                    ->orWhere('email', 'like', $term);
+                            })
+                            ->orWhereHas('coupon', function ($query) use ($term) {
+                                $query
+                                    ->where('code', 'like', $term)
+                                    ->orWhere('title', 'like', $term);
+                            });
+                    });
+                },
+            )
+            ->when(
+                $request->filled('used_from'),
+                fn ($query) => $query->whereDate('created_at', '>=', $request->date('used_from')->toDateString()),
+            )
+            ->when(
+                $request->filled('used_to'),
+                fn ($query) => $query->whereDate('created_at', '<=', $request->date('used_to')->toDateString()),
             );
 
         $total = (clone $query)->count();

@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Enums\OccasionType;
 use App\Http\Requests\StoreTemplateRequest;
 use App\Http\Requests\StoreUploadRequest;
 use App\Http\Requests\UpdateTemplateContentRequest;
@@ -17,14 +18,26 @@ class TemplatesController extends Controller
     public function index(Request $request): JsonResponse
     {
         $request->validate([
-            'occasion' => ['nullable', 'in:'.implode(',', TemplatesModel::OCCASIONS)],
+            'occasion_id' => ['nullable', 'integer', 'exists:t_occasion,id'],
+            'occasion' => ['nullable', 'in:'.implode(',', OccasionType::values())],
+            'type' => ['nullable', 'in:'.implode(',', OccasionType::values())],
         ]);
 
+        $type = $request->string('type')->toString() ?: $request->string('occasion')->toString();
+
         $templates = TemplatesModel::query()
+            ->with(['occasion.thumbnail'])
             ->where('is_active', true)
             ->when(
-                $request->filled('occasion'),
-                fn ($query) => $query->where('occasion', $request->string('occasion')->toString()),
+                $request->filled('occasion_id'),
+                fn ($query) => $query->where('occasion_id', (int) $request->input('occasion_id')),
+            )
+            ->when(
+                $type !== '',
+                fn ($query) => $query->whereHas(
+                    'occasion',
+                    fn ($occasionQuery) => $occasionQuery->where('type', $type),
+                ),
             )
             ->orderBy('name')
             ->get()
@@ -53,13 +66,15 @@ class TemplatesController extends Controller
     {
         $request->validate([
             'search' => ['nullable', 'string', 'max:120'],
-            'occasion' => ['nullable', 'in:'.implode(',', TemplatesModel::OCCASIONS)],
+            'occasion_id' => ['nullable', 'integer', 'exists:t_occasion,id'],
+            'occasion' => ['nullable', 'in:'.implode(',', OccasionType::values())],
             'status' => ['nullable', 'in:active,inactive'],
         ]);
 
         $search = trim($request->string('search')->toString());
 
         $templates = TemplatesModel::query()
+            ->with(['occasion.thumbnail'])
             ->when(
                 $search !== '',
                 function ($query) use ($search) {
@@ -73,8 +88,15 @@ class TemplatesController extends Controller
                 },
             )
             ->when(
+                $request->filled('occasion_id'),
+                fn ($query) => $query->where('occasion_id', (int) $request->input('occasion_id')),
+            )
+            ->when(
                 $request->filled('occasion'),
-                fn ($query) => $query->where('occasion', $request->string('occasion')->toString()),
+                fn ($query) => $query->whereHas(
+                    'occasion',
+                    fn ($occasionQuery) => $occasionQuery->where('type', $request->string('occasion')->toString()),
+                ),
             )
             ->when(
                 $request->input('status') === 'active',
@@ -102,7 +124,7 @@ class TemplatesController extends Controller
         ]);
 
         return $this->success('Template created successfully.', [
-            'template' => $template->toApiArray(),
+            'template' => $template->load(['occasion.thumbnail'])->toApiArray(),
         ], 201);
     }
 
@@ -118,7 +140,7 @@ class TemplatesController extends Controller
         $template->save();
 
         return $this->success('Template updated successfully.', [
-            'template' => $template->fresh()?->toApiArray(),
+            'template' => $template->fresh()?->load(['occasion.thumbnail'])->toApiArray(),
         ]);
     }
 
@@ -141,7 +163,7 @@ class TemplatesController extends Controller
 
     public function adminShow(int $id): JsonResponse
     {
-        $template = TemplatesModel::query()->find($id);
+        $template = TemplatesModel::query()->with(['occasion.thumbnail'])->find($id);
 
         if ($template === null) {
             return $this->error('Template not found.', 404);
@@ -164,7 +186,7 @@ class TemplatesController extends Controller
         $template->save();
 
         return $this->success('Template content saved.', [
-            'template' => $template->fresh()?->toApiArray(),
+            'template' => $template->fresh()?->load(['occasion.thumbnail'])->toApiArray(),
         ]);
     }
 
@@ -214,7 +236,7 @@ class TemplatesController extends Controller
 
     private function findPublicTemplate(string $id): ?TemplatesModel
     {
-        $query = TemplatesModel::query()->where('is_active', true);
+        $query = TemplatesModel::query()->with(['occasion.thumbnail'])->where('is_active', true);
 
         if (ctype_digit($id)) {
             return $query->where('id', (int) $id)->first();

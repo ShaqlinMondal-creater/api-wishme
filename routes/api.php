@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\AuthController;
+use App\Http\Controllers\OccasionsController;
 use App\Http\Controllers\ProjectsController;
 use App\Http\Controllers\TemplatesController;
 use App\Http\Controllers\UsersController;
@@ -11,6 +12,8 @@ Route::post('/login', [AuthController::class, 'login']);
 Route::post('/forgot-password', [AuthController::class, 'forgotPassword']);
 Route::post('/reset-password', [AuthController::class, 'resetPassword']);
 
+Route::get('/occasions', [OccasionsController::class, 'occasionView']);
+Route::get('/occasions/{id}', [OccasionsController::class, 'occasionViewDetail']);
 Route::get('/templates', [TemplatesController::class, 'index']);
 Route::get('/templates/{id}', [TemplatesController::class, 'show']);
 
@@ -32,6 +35,14 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::get('/users', [UsersController::class, 'index']);
         Route::post('/users/{id}', [UsersController::class, 'update']);
         Route::delete('/users/{id}', [UsersController::class, 'destroy']);
+
+        Route::get('/occasions', [OccasionsController::class, 'occasionView']);
+        Route::post('/occasions', [OccasionsController::class, 'occasionCreate']);
+        Route::post('/occasions/bulk-create', [OccasionsController::class, 'occasionBulkCreate']);
+        Route::get('/occasions/{id}', [OccasionsController::class, 'occasionViewDetail']);
+        Route::post('/occasions/{id}', [OccasionsController::class, 'occasionUpdate']);
+        Route::post('/occasions/{id}/media', [OccasionsController::class, 'occasionUpload']);
+        Route::delete('/occasions/{id}', [OccasionsController::class, 'occasionDelete']);
 
         Route::get('/templates', [TemplatesController::class, 'adminIndex']);
         Route::post('/templates', [TemplatesController::class, 'store']);

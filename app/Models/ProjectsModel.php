@@ -20,7 +20,7 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 ])]
 class ProjectsModel extends Model
 {
-    protected $table = 'projects';
+    protected $table = 't_projects';
 
     /**
      * @return array<string, string>
@@ -70,7 +70,10 @@ class ProjectsModel extends Model
             'status' => $this->status instanceof ProjectStatus ? $this->status->value : $this->status,
             'template_name' => $this->template?->name,
             'template_slug' => $this->template?->slug,
-            'occasion' => $this->template?->occasion,
+            'occasion' => $this->template?->occasion?->type instanceof \App\Enums\OccasionType
+                ? $this->template->occasion->type->value
+                : $this->template?->occasion?->type,
+            'occasion_id' => $this->template?->occasion_id,
             'created_at' => $this->created_at?->toIso8601String(),
             'updated_at' => $this->updated_at?->toIso8601String(),
         ];

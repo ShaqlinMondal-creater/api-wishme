@@ -2,6 +2,7 @@
 
 namespace App\Services;
 
+use App\Models\OccasionsModel;
 use App\Models\ProjectsModel;
 use App\Models\TemplatesModel;
 use App\Models\UploadsModel;
@@ -12,6 +13,15 @@ use RuntimeException;
 
 class StoreUpload
 {
+    public function forOccasion(UploadedFile $file, int $userId, OccasionsModel $occasion): UploadsModel
+    {
+        $upload = $this->store($file, $userId, null, null, 'occasions/'.$occasion->id, $occasion->id);
+        $occasion->thumbnail_id = $upload->id;
+        $occasion->save();
+
+        return $upload;
+    }
+
     public function forTemplate(UploadedFile $file, int $userId, TemplatesModel $template): UploadsModel
     {
         return $this->store($file, $userId, $template->id, null, 'templates/'.$template->id);
@@ -28,9 +38,10 @@ class StoreUpload
         ?int $templateId,
         ?int $projectId,
         string $folder,
+        ?int $occasionId = null,
     ): UploadsModel {
-        if ($templateId === null && $projectId === null) {
-            throw new InvalidArgumentException('An upload must belong to a template or a project.');
+        if ($templateId === null && $projectId === null && $occasionId === null) {
+            throw new InvalidArgumentException('An upload must belong to a template, a project, or an occasion.');
         }
 
         $extension = strtolower($file->getClientOriginalExtension());
@@ -56,6 +67,7 @@ class StoreUpload
             'user_id' => $userId,
             'template_id' => $templateId,
             'project_id' => $projectId,
+            'occasion_id' => $occasionId,
             'kind' => UploadsModel::kindFromExtension($extension),
             'disk' => 'uploads',
             'path' => $path,

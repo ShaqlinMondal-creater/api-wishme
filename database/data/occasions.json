@@ -1,0 +1,34 @@
+{
+  "occasions": [
+    {
+      "title": "Birthday",
+      "type": "birthday",
+      "description": "Turn a birthday into a private cinematic moment — names, photos, music, and a message that feels handwritten."
+    },
+    {
+      "title": "Anniversary",
+      "type": "anniversary",
+      "description": "Celebrate a relationship with an elegant, slow-blooming wish that only the two of you need to understand."
+    },
+    {
+      "title": "Bhai Phota",
+      "type": "bhai-phota",
+      "description": "Offer a blessing that feels intimate and festive — a personal ritual, not a forwarded greeting."
+    },
+    {
+      "title": "Raksha Bandhan",
+      "type": "raksha-bandhan",
+      "description": "Honour the bond between siblings with warmth, ritual, and a keepsake they can reopen any time."
+    },
+    {
+      "title": "Proposal",
+      "type": "proposal",
+      "description": "A private question, held with care — not a public post."
+    },
+    {
+      "title": "Dating",
+      "type": "dating",
+      "description": "For the beginning of a story you want to keep."
+    }
+  ]
+}

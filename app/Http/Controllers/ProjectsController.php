@@ -18,7 +18,7 @@ class ProjectsController extends Controller
     public function index(Request $request): JsonResponse
     {
         $projects = ProjectsModel::query()
-            ->with('template')
+            ->with(['template.occasion'])
             ->where('user_id', $request->user()?->id)
             ->orderByDesc('id')
             ->get()
@@ -52,7 +52,7 @@ class ProjectsController extends Controller
         ]);
 
         return $this->success('Project created successfully.', [
-            'project' => $project->load('template')->toApiArray(),
+            'project' => $project->load(['template.occasion'])->toApiArray(),
         ], 201);
     }
 
@@ -65,7 +65,7 @@ class ProjectsController extends Controller
         }
 
         return $this->success('Project fetched successfully.', [
-            'project' => $project->load('template')->toApiArray(),
+            'project' => $project->load(['template.occasion'])->toApiArray(),
         ]);
     }
 
@@ -89,7 +89,7 @@ class ProjectsController extends Controller
         $project->save();
 
         return $this->success('Project updated successfully.', [
-            'project' => $project->fresh()?->load('template')->toApiArray(),
+            'project' => $project->fresh()?->load(['template.occasion'])->toApiArray(),
         ]);
     }
 

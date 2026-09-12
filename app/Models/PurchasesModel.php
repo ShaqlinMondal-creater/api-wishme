@@ -16,7 +16,7 @@ use Illuminate\Database\Eloquent\Relations\HasOne;
 ])]
 class PurchasesModel extends Model
 {
-    protected $table = 'purchases';
+    protected $table = 't_purchases';
 
     /**
      * @return array<string, string>

@@ -4,6 +4,7 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 
 #[Fillable([
@@ -11,7 +12,7 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
     'name',
     'description',
     'cover',
-    'occasion',
+    'occasion_id',
     'price',
     'has_letter',
     'has_stories',
@@ -24,16 +25,6 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 class TemplatesModel extends Model
 {
     public const SLUG_MIDNIGHT_TOAST = 'midnight-toast';
-
-    /**
-     * @var list<string>
-     */
-    public const OCCASIONS = [
-        'birthday',
-        'anniversary',
-        'raksha-bandhan',
-        'bhai-phota',
-    ];
 
     /**
      * @var list<int>
@@ -51,7 +42,7 @@ class TemplatesModel extends Model
         'gifts' => 'has_surprise_gift',
     ];
 
-    protected $table = 'templates';
+    protected $table = 't_templates';
 
     /**
      * @return array<string, string>
@@ -91,6 +82,11 @@ class TemplatesModel extends Model
         ];
     }
 
+    public function occasion(): BelongsTo
+    {
+        return $this->belongsTo(OccasionsModel::class, 'occasion_id');
+    }
+
     public function purchases(): HasMany
     {
         return $this->hasMany(PurchasesModel::class, 'template_id');
@@ -117,7 +113,8 @@ class TemplatesModel extends Model
             'name' => $this->name,
             'description' => $this->description,
             'cover' => $this->cover,
-            'occasion' => $this->occasion,
+            'occasion_id' => $this->occasion_id,
+            'occasion' => $this->occasion?->toApiArray(),
             'price' => $this->price,
             'has_letter' => $this->has_letter,
             'has_stories' => $this->has_stories,

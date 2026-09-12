@@ -18,12 +18,12 @@ trait ValidatesTemplatePayload
                 'string',
                 'max:80',
                 'regex:/^[a-z0-9]+(?:-[a-z0-9]+)*$/',
-                Rule::unique('templates', 'slug')->ignore($ignoreId),
+                Rule::unique('t_templates', 'slug')->ignore($ignoreId),
             ],
             'name' => ['required', 'string', 'max:120'],
             'description' => ['required', 'string', 'max:2000'],
             'cover' => ['required', 'string', 'max:500'],
-            'occasion' => ['required', Rule::in(TemplatesModel::OCCASIONS)],
+            'occasion_id' => ['required', 'integer', Rule::exists('t_occasion', 'id')],
             'price' => ['required', 'integer', Rule::in(TemplatesModel::PRICES)],
             'has_letter' => ['required', 'boolean'],
             'has_stories' => ['required', 'boolean'],
@@ -42,7 +42,7 @@ trait ValidatesTemplatePayload
         return [
             'slug.regex' => 'Use a lowercase slug like midnight-toast.',
             'slug.unique' => 'This slug is already used by another template.',
-            'occasion.in' => 'Choose a valid occasion.',
+            'occasion_id.exists' => 'Choose a valid occasion.',
             'price.in' => 'Price must be 149, 249, or 499.',
         ];
     }

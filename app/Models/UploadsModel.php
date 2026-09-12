@@ -11,6 +11,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
     'user_id',
     'template_id',
     'project_id',
+    'occasion_id',
     'kind',
     'disk',
     'path',
@@ -39,6 +40,17 @@ class UploadsModel extends Model
         'audio/mp4',
         'audio/aac',
         'audio/webm',
+    ];
+
+    /**
+     * @var list<string>
+     */
+    public const IMAGE_EXTENSIONS = [
+        'jpg',
+        'jpeg',
+        'png',
+        'webp',
+        'gif',
     ];
 
     /**
@@ -77,7 +89,7 @@ class UploadsModel extends Model
         'aac' => 'audio/aac',
     ];
 
-    protected $table = 'uploads';
+    protected $table = 't_uploads';
 
     /**
      * @return array<string, string>
@@ -125,6 +137,11 @@ class UploadsModel extends Model
         return $this->belongsTo(ProjectsModel::class, 'project_id');
     }
 
+    public function occasion(): BelongsTo
+    {
+        return $this->belongsTo(OccasionsModel::class, 'occasion_id');
+    }
+
     /**
      * @return array<string, mixed>
      */
@@ -135,6 +152,7 @@ class UploadsModel extends Model
             'user_id' => $this->user_id,
             'template_id' => $this->template_id,
             'project_id' => $this->project_id,
+            'occasion_id' => $this->occasion_id,
             'kind' => $this->kind instanceof UploadKind ? $this->kind->value : $this->kind,
             'disk' => $this->disk,
             'path' => $this->path,

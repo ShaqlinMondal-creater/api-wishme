@@ -2,7 +2,6 @@
 
 namespace App\Http\Requests\Concerns;
 
-use App\Models\TemplatesModel;
 use Illuminate\Validation\Rule;
 
 trait ValidatesTemplatePayload
@@ -23,7 +22,7 @@ trait ValidatesTemplatePayload
             'name' => ['required', 'string', 'max:120'],
             'description' => ['required', 'string', 'max:2000'],
             'occasion_id' => ['required', 'integer', Rule::exists('t_occasion', 'id')],
-            'price' => ['required', 'integer', Rule::in(TemplatesModel::PRICES)],
+            'price' => ['required', 'integer', 'min:0', 'max:999999'],
             'has_letter' => ['required', 'boolean'],
             'has_stories' => ['required', 'boolean'],
             'has_moments' => ['required', 'boolean'],
@@ -42,7 +41,7 @@ trait ValidatesTemplatePayload
             'slug.regex' => 'Use a lowercase slug like midnight-toast.',
             'slug.unique' => 'This slug is already used by another template.',
             'occasion_id.exists' => 'Choose a valid occasion.',
-            'price.in' => 'Price must be 149, 249, or 499.',
+            'price.min' => 'Price cannot be negative.',
         ];
     }
 }

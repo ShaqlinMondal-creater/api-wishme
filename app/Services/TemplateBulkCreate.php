@@ -64,7 +64,7 @@ class TemplateBulkCreate
                 || $name === ''
                 || $description === ''
                 || $type === null
-                || ! in_array($price, TemplatesModel::PRICES, true)
+                || $price < 0
             ) {
                 continue;
             }

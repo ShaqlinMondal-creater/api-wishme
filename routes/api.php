@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\AuthController;
+use App\Http\Controllers\CouponsController;
 use App\Http\Controllers\OccasionsController;
 use App\Http\Controllers\ProjectsController;
 use App\Http\Controllers\TemplatesController;
@@ -54,5 +55,11 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::post('/templates/{id}/media', [TemplatesController::class, 'uploadMedia']);
         Route::post('/templates/{id}/cover', [TemplatesController::class, 'uploadCover']);
         Route::delete('/templates/{id}', [TemplatesController::class, 'destroy']);
+
+        Route::get('/coupons', [CouponsController::class, 'index']);
+        Route::post('/coupons', [CouponsController::class, 'store']);
+        Route::get('/coupons/{id}', [CouponsController::class, 'show']);
+        Route::post('/coupons/{id}', [CouponsController::class, 'update']);
+        Route::delete('/coupons/{id}', [CouponsController::class, 'destroy']);
     });
 });

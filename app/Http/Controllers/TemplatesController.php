@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Enums\OccasionType;
+use App\Http\Requests\StoreOccasionUploadRequest;
 use App\Http\Requests\StoreTemplateRequest;
 use App\Http\Requests\StoreUploadRequest;
 use App\Http\Requests\UpdateTemplateContentRequest;
@@ -26,7 +27,7 @@ class TemplatesController extends Controller
         $type = $request->string('type')->toString() ?: $request->string('occasion')->toString();
 
         $templates = TemplatesModel::query()
-            ->with(['occasion.thumbnail'])
+            ->with(['occasion.thumbnail', 'coverUpload'])
             ->where('is_active', true)
             ->when(
                 $request->filled('occasion_id'),
@@ -74,7 +75,7 @@ class TemplatesController extends Controller
         $search = trim($request->string('search')->toString());
 
         $templates = TemplatesModel::query()
-            ->with(['occasion.thumbnail'])
+            ->with(['occasion.thumbnail', 'coverUpload'])
             ->when(
                 $search !== '',
                 function ($query) use ($search) {
@@ -116,19 +117,23 @@ class TemplatesController extends Controller
         ]);
     }
 
-    public function store(StoreTemplateRequest $request): JsonResponse
+    public function store(StoreTemplateRequest $request, StoreUpload $store): JsonResponse
     {
+        $data = $request->safe()->except(['cover_id', 'cover']);
+
         $template = TemplatesModel::query()->create([
-            ...$request->safe()->all(),
+            ...$data,
             'is_active' => $request->boolean('is_active', true),
         ]);
 
+        $this->attachDefaultCoverIfNeeded($template, (int) $request->user()?->id, $store);
+
         return $this->success('Template created successfully.', [
-            'template' => $template->load(['occasion.thumbnail'])->toApiArray(),
+            'template' => $template->fresh()?->load(['occasion.thumbnail', 'coverUpload'])->toApiArray(),
         ], 201);
     }
 
-    public function update(UpdateTemplateRequest $request, int $id): JsonResponse
+    public function update(UpdateTemplateRequest $request, int $id, StoreUpload $store): JsonResponse
     {
         $template = TemplatesModel::query()->find($id);
 
@@ -136,11 +141,12 @@ class TemplatesController extends Controller
             return $this->error('Template not found.', 404);
         }
 
-        $template->fill($request->safe()->all());
+        $template->fill($request->safe()->except(['cover_id', 'cover']));
         $template->save();
+        $this->attachDefaultCoverIfNeeded($template, (int) $request->user()?->id, $store);
 
         return $this->success('Template updated successfully.', [
-            'template' => $template->fresh()?->load(['occasion.thumbnail'])->toApiArray(),
+            'template' => $template->fresh()?->load(['occasion.thumbnail', 'coverUpload'])->toApiArray(),
         ]);
     }
 
@@ -163,7 +169,7 @@ class TemplatesController extends Controller
 
     public function adminShow(int $id): JsonResponse
     {
-        $template = TemplatesModel::query()->with(['occasion.thumbnail'])->find($id);
+        $template = TemplatesModel::query()->with(['occasion.thumbnail', 'coverUpload'])->find($id);
 
         if ($template === null) {
             return $this->error('Template not found.', 404);
@@ -186,7 +192,7 @@ class TemplatesController extends Controller
         $template->save();
 
         return $this->success('Template content saved.', [
-            'template' => $template->fresh()?->load(['occasion.thumbnail'])->toApiArray(),
+            'template' => $template->fresh()?->load(['occasion.thumbnail', 'coverUpload'])->toApiArray(),
         ]);
     }
 
@@ -234,9 +240,48 @@ class TemplatesController extends Controller
         ]);
     }
 
+    public function uploadCover(StoreOccasionUploadRequest $request, int $id, StoreUpload $store): JsonResponse
+    {
+        $template = TemplatesModel::query()->find($id);
+
+        if ($template === null) {
+            return $this->error('Template not found.', 404);
+        }
+
+        $file = $request->file('file');
+        $user = $request->user();
+
+        if ($file === null || $user === null) {
+            return $this->error('Please choose an image.', 422);
+        }
+
+        $upload = $store->forTemplateCover($file, (int) $user->id, $template);
+
+        return $this->success('Cover uploaded.', [
+            'template' => $template->fresh()?->load(['occasion.thumbnail', 'coverUpload'])->toApiArray(),
+            'upload' => $upload->toApiArray(),
+            'url' => $upload->url,
+        ]);
+    }
+
+    private function attachDefaultCoverIfNeeded(TemplatesModel $template, int $userId, StoreUpload $store): void
+    {
+        if ($userId < 1 || $template->cover_id) {
+            return;
+        }
+
+        $source = database_path('data/templates/'.$template->slug.'.png');
+
+        if (! is_file($source)) {
+            return;
+        }
+
+        $store->forTemplateFromPath($source, $userId, $template);
+    }
+
     private function findPublicTemplate(string $id): ?TemplatesModel
     {
-        $query = TemplatesModel::query()->with(['occasion.thumbnail'])->where('is_active', true);
+        $query = TemplatesModel::query()->with(['occasion.thumbnail', 'coverUpload'])->where('is_active', true);
 
         if (ctype_digit($id)) {
             return $query->where('id', (int) $id)->first();

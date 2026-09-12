@@ -3,31 +3,37 @@
     {
       "title": "Birthday",
       "type": "birthday",
+      "image": "birthday.png",
       "description": "Turn a birthday into a private cinematic moment — names, photos, music, and a message that feels handwritten."
     },
     {
       "title": "Anniversary",
       "type": "anniversary",
+      "image": "anniversary.png",
       "description": "Celebrate a relationship with an elegant, slow-blooming wish that only the two of you need to understand."
     },
     {
       "title": "Bhai Phota",
       "type": "bhai-phota",
+      "image": "bhai-phota.png",
       "description": "Offer a blessing that feels intimate and festive — a personal ritual, not a forwarded greeting."
     },
     {
       "title": "Raksha Bandhan",
       "type": "raksha-bandhan",
+      "image": "raksha-bandhan.png",
       "description": "Honour the bond between siblings with warmth, ritual, and a keepsake they can reopen any time."
     },
     {
       "title": "Proposal",
       "type": "proposal",
+      "image": "proposal.png",
       "description": "A private question, held with care — not a public post."
     },
     {
       "title": "Dating",
       "type": "dating",
+      "image": "dating.png",
       "description": "For the beginning of a story you want to keep."
     }
   ]

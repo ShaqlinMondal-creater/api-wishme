@@ -11,7 +11,7 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
     'slug',
     'name',
     'description',
-    'cover',
+    'cover_id',
     'occasion_id',
     'price',
     'has_letter',
@@ -58,6 +58,7 @@ class TemplatesModel extends Model
             'has_surprise_gift' => 'boolean',
             'is_active' => 'boolean',
             'content' => 'array',
+            'cover_id' => 'integer',
         ];
     }
 
@@ -80,6 +81,11 @@ class TemplatesModel extends Model
             'privacy' => 'Privacy',
             'gifts' => 'Surprise gift',
         ];
+    }
+
+    public function coverUpload(): BelongsTo
+    {
+        return $this->belongsTo(UploadsModel::class, 'cover_id');
     }
 
     public function occasion(): BelongsTo
@@ -112,7 +118,8 @@ class TemplatesModel extends Model
             'slug' => $this->slug,
             'name' => $this->name,
             'description' => $this->description,
-            'cover' => $this->cover,
+            'cover' => $this->coverUpload?->url,
+            'cover_id' => $this->cover_id,
             'occasion_id' => $this->occasion_id,
             'occasion' => $this->occasion?->toApiArray(),
             'price' => $this->price,

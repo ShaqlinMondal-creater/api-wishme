@@ -22,9 +22,98 @@ class StoreUpload
         return $upload;
     }
 
+    public function forOccasionFromPath(string $source, int $userId, OccasionsModel $occasion): UploadsModel
+    {
+        if (! is_file($source)) {
+            throw new RuntimeException('Default occasion image was not found.');
+        }
+
+        $extension = strtolower((string) pathinfo($source, PATHINFO_EXTENSION));
+        $filename = Str::random(40).($extension !== '' ? '.'.$extension : '');
+        $folder = 'occasions/'.$occasion->id;
+        $path = $folder.'/'.$filename;
+        $absolute = public_path('uploads'.DIRECTORY_SEPARATOR.str_replace('/', DIRECTORY_SEPARATOR, $path));
+        $directory = dirname($absolute);
+
+        if (! is_dir($directory) && ! mkdir($directory, 0755, true) && ! is_dir($directory)) {
+            throw new RuntimeException('Could not create the uploads folder.');
+        }
+
+        if (! copy($source, $absolute)) {
+            throw new RuntimeException('The default occasion image could not be saved.');
+        }
+
+        $upload = UploadsModel::query()->create([
+            'user_id' => $userId,
+            'template_id' => null,
+            'project_id' => null,
+            'occasion_id' => $occasion->id,
+            'kind' => UploadsModel::kindFromExtension($extension),
+            'disk' => 'uploads',
+            'path' => $path,
+            'url' => $this->publicUrl($path),
+            'original_name' => Str::limit(basename($source), 255, ''),
+            'mime' => UploadsModel::MIME_BY_EXTENSION[$extension] ?? 'image/png',
+            'size' => (int) filesize($absolute),
+        ]);
+
+        $occasion->thumbnail_id = $upload->id;
+        $occasion->save();
+
+        return $upload;
+    }
+
     public function forTemplate(UploadedFile $file, int $userId, TemplatesModel $template): UploadsModel
     {
         return $this->store($file, $userId, $template->id, null, 'templates/'.$template->id);
+    }
+
+    public function forTemplateCover(UploadedFile $file, int $userId, TemplatesModel $template): UploadsModel
+    {
+        $upload = $this->store($file, $userId, $template->id, null, 'templates/'.$template->id.'/cover');
+        $this->assignTemplateCover($template, $upload);
+
+        return $upload;
+    }
+
+    public function forTemplateFromPath(string $source, int $userId, TemplatesModel $template): UploadsModel
+    {
+        if (! is_file($source)) {
+            throw new RuntimeException('Default template cover was not found.');
+        }
+
+        $extension = strtolower((string) pathinfo($source, PATHINFO_EXTENSION));
+        $filename = Str::random(40).($extension !== '' ? '.'.$extension : '');
+        $folder = 'templates/'.$template->id.'/cover';
+        $path = $folder.'/'.$filename;
+        $absolute = public_path('uploads'.DIRECTORY_SEPARATOR.str_replace('/', DIRECTORY_SEPARATOR, $path));
+        $directory = dirname($absolute);
+
+        if (! is_dir($directory) && ! mkdir($directory, 0755, true) && ! is_dir($directory)) {
+            throw new RuntimeException('Could not create the uploads folder.');
+        }
+
+        if (! copy($source, $absolute)) {
+            throw new RuntimeException('The default template cover could not be saved.');
+        }
+
+        $upload = UploadsModel::query()->create([
+            'user_id' => $userId,
+            'template_id' => $template->id,
+            'project_id' => null,
+            'occasion_id' => null,
+            'kind' => UploadsModel::kindFromExtension($extension),
+            'disk' => 'uploads',
+            'path' => $path,
+            'url' => $this->publicUrl($path),
+            'original_name' => Str::limit(basename($source), 255, ''),
+            'mime' => UploadsModel::MIME_BY_EXTENSION[$extension] ?? 'image/png',
+            'size' => (int) filesize($absolute),
+        ]);
+
+        $this->assignTemplateCover($template, $upload);
+
+        return $upload;
     }
 
     public function forProject(UploadedFile $file, int $userId, ProjectsModel $project): UploadsModel
@@ -87,6 +176,12 @@ class StoreUpload
         }
 
         return UploadsModel::MIME_BY_EXTENSION[$extension] ?? 'application/octet-stream';
+    }
+
+    private function assignTemplateCover(TemplatesModel $template, UploadsModel $upload): void
+    {
+        $template->cover_id = $upload->id;
+        $template->save();
     }
 
     private function publicUrl(string $path): string

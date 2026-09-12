@@ -8,6 +8,7 @@ use App\Models\OccasionsModel;
 use App\Services\OccasionBulkCreate;
 use App\Services\StoreUpload;
 use Illuminate\Http\JsonResponse;
+use Illuminate\Http\Request;
 use RuntimeException;
 
 class OccasionsController extends Controller
@@ -39,7 +40,7 @@ class OccasionsController extends Controller
         ]);
     }
 
-    public function occasionCreate(StoreOccasionRequest $request): JsonResponse
+    public function occasionCreate(StoreOccasionRequest $request, StoreUpload $store): JsonResponse
     {
         $occasion = OccasionsModel::query()->create($request->safe()->only([
             'title',
@@ -48,15 +49,25 @@ class OccasionsController extends Controller
             'thumbnail_id',
         ]));
 
+        if ($occasion->thumbnail_id === null) {
+            $this->attachTypeDefault($store, $occasion, (int) $request->user()?->id);
+        }
+
         return $this->success('Occasion created successfully.', [
-            'occasion' => $occasion->load('thumbnail')->toApiArray(),
+            'occasion' => $occasion->fresh()?->load('thumbnail')->toApiArray(),
         ], 201);
     }
 
-    public function occasionBulkCreate(OccasionBulkCreate $bulkCreate): JsonResponse
+    public function occasionBulkCreate(Request $request, OccasionBulkCreate $bulkCreate): JsonResponse
     {
+        $user = $request->user();
+
+        if ($user === null) {
+            return $this->error('Please sign in.', 401);
+        }
+
         try {
-            $result = $bulkCreate->run();
+            $result = $bulkCreate->run((int) $user->id);
         } catch (RuntimeException $error) {
             return $this->error($error->getMessage(), 422);
         }
@@ -130,5 +141,23 @@ class OccasionsController extends Controller
             'upload' => $upload->toApiArray(),
             'url' => $upload->url,
         ]);
+    }
+
+    private function attachTypeDefault(StoreUpload $store, OccasionsModel $occasion, int $userId): void
+    {
+        if ($userId < 1) {
+            return;
+        }
+
+        $type = $occasion->type instanceof \App\Enums\OccasionType
+            ? $occasion->type->value
+            : (string) $occasion->type;
+        $source = database_path('data/occasions/'.$type.'.png');
+
+        if (! is_file($source)) {
+            return;
+        }
+
+        $store->forOccasionFromPath($source, $userId, $occasion);
     }
 }

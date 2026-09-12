@@ -10,7 +10,14 @@ use RuntimeException;
 
 class OccasionBulkCreate
 {
-    public function run(): array
+    public function __construct(private StoreUpload $store)
+    {
+    }
+
+    /**
+     * @return array{created: list<array<string, mixed>>, skipped: list<array<string, mixed>>, templates_linked: int}
+     */
+    public function run(int $userId): array
     {
         $path = database_path('data/occasions.json');
 
@@ -34,6 +41,7 @@ class OccasionBulkCreate
 
             $title = trim((string) ($row['title'] ?? ''));
             $description = trim((string) ($row['description'] ?? ''));
+            $image = trim((string) ($row['image'] ?? ''));
             $type = OccasionType::tryFrom((string) ($row['type'] ?? ''));
 
             if ($title === '' || $description === '' || $type === null) {
@@ -43,7 +51,11 @@ class OccasionBulkCreate
             $existing = OccasionsModel::query()->where('type', $type->value)->first();
 
             if ($existing !== null) {
-                $skipped[] = $existing->toApiArray();
+                if ($existing->thumbnail_id === null) {
+                    $this->attachDefaultImage($existing, $userId, $image !== '' ? $image : $type->value.'.png');
+                }
+
+                $skipped[] = $existing->fresh()?->load('thumbnail')->toApiArray() ?? $existing->toApiArray();
                 continue;
             }
 
@@ -54,7 +66,8 @@ class OccasionBulkCreate
                 'thumbnail_id' => null,
             ]);
 
-            $created[] = $occasion->toApiArray();
+            $this->attachDefaultImage($occasion, $userId, $image !== '' ? $image : $type->value.'.png');
+            $created[] = $occasion->fresh()?->load('thumbnail')->toApiArray() ?? $occasion->toApiArray();
         }
 
         $templatesLinked = $this->linkExistingTemplates();
@@ -64,6 +77,17 @@ class OccasionBulkCreate
             'skipped' => $skipped,
             'templates_linked' => $templatesLinked,
         ];
+    }
+
+    private function attachDefaultImage(OccasionsModel $occasion, int $userId, string $filename): void
+    {
+        $source = database_path('data/occasions/'.basename($filename));
+
+        if (! is_file($source)) {
+            return;
+        }
+
+        $this->store->forOccasionFromPath($source, $userId, $occasion);
     }
 
     private function linkExistingTemplates(): int

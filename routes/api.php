@@ -51,6 +51,7 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::post('/templates/{id}/content', [TemplatesController::class, 'updateContent']);
         Route::get('/templates/{id}/uploads', [TemplatesController::class, 'uploads']);
         Route::post('/templates/{id}/media', [TemplatesController::class, 'uploadMedia']);
+        Route::post('/templates/{id}/cover', [TemplatesController::class, 'uploadCover']);
         Route::delete('/templates/{id}', [TemplatesController::class, 'destroy']);
     });
 });

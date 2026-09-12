@@ -22,7 +22,6 @@ trait ValidatesTemplatePayload
             ],
             'name' => ['required', 'string', 'max:120'],
             'description' => ['required', 'string', 'max:2000'],
-            'cover' => ['required', 'string', 'max:500'],
             'occasion_id' => ['required', 'integer', Rule::exists('t_occasion', 'id')],
             'price' => ['required', 'integer', Rule::in(TemplatesModel::PRICES)],
             'has_letter' => ['required', 'boolean'],
